@@ -48,7 +48,7 @@ Sparky(
 
 Sparky(
     {
-        name: "vv",
+        name: "👀👀",
         fromMe: true,
         category: "converters",
         desc: "Resends the view Once message"
@@ -60,7 +60,7 @@ Sparky(
             return m.reply("_Reply to ViewOnce Message !_");
         }
         try {
-            m.react("⏫");
+            m.react("☠️");
 		let buff = await m.quoted.download();
 		return await m.sendFile(buff);
         } catch (e) {
