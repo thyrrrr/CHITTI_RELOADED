@@ -311,3 +311,27 @@ async ({
         console.error(error);
     }
 });
+
+const { Sparky, isPublic } = require("../lib");
+const { getJson } = require("./pluginsCore");
+
+Sparky({
+    name: "gopu",
+    fromMe: isPublic,
+    category: "tools",
+    desc: "Send random couple dp"
+},
+async ({ m }) => {
+    try {
+        const { result } = await getJson("https://gist.github.com/ayazaliofc/58f731507d834f61b9b6f6b950804a7a/raw");
+        const { male, female } = result[Math.floor(Math.random() * result.length)];
+
+        await m.sendFromUrl(male, { caption: "💙 𝘛𝘩𝘦𝘫𝘶𝘴" });
+        await m.sendFromUrl(female, { caption: "🌸 𝘎𝘰𝘱𝘪𝘬𝘢" });
+
+    } catch (e) {
+        console.error(e);
+        await m.reply("❌ Couldn’t fetch couple dp.");
+    }
+});
+
