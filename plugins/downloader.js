@@ -310,33 +310,3 @@ async ({
         console.error(error);
     }
 });
-
-
-Sparky({
-    name: "gopu",
-    fromMe: isPublic,
-    category: "fun",
-    desc: "Send random couple DP"
-},
-async ({ m, client }) => {
-    try {
-        await m.react('💑');
-        const { result } = await getJson("https://gist.github.com/ayazaliofc/58f731507d834f61b9b6f6b950804a7a/raw");
-
-        if (!result || result.length === 0) {
-            return await m.reply("❌ Couldn't fetch couple DP.");
-        }
-
-        const { male, female } = result[Math.floor(Math.random() * result.length)];
-
-        await m.sendFromUrl(m.jid, male, { caption: "👦 𝕿𝖍𝖊𝖏𝖚𝖘 💙" }, "image");
-        await m.sendFromUrl(m.jid, female, { caption: "👧 𝕲𝖔𝖕𝖎𝖐𝖆 ❤️" }, "image");
-
-        await m.react('✅');
-    } catch (error) {
-        console.error(error);
-        await m.reply("❌ Error fetching couple DP.");
-        await m.react('❌');
-    }
-});
-
