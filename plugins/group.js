@@ -39,33 +39,26 @@ Sparky({
 
 
 Sparky({
-	name: "tagall",
-	fromMe: isPublic,
-	desc: lang.TAGALL_DESC,
-	category: "group",
-}, async ({
-	client,
-	m
-}) => {
-	if (!m.isGroup) return await m.reply(lang.NOT_GROUP);
-	if (!m.sudo && !await m.isAdmin(m.sender)) {
-		return await m.reply(lang.NOT_GROUP_ADMIN);
-	}
-	if (!m.botIsAdmin) return await m.reply(lang.NOT_ADMIN);
-		const {
-			participants
-		} = await client.groupMetadata(m.jid).catch(() => ({
-			participants: []
-		}));
-		if (!participants.length) return await m.reply(lang.ERROR_METADATA);
-		const msg = participants.map((p, i) => `${i + 1}. @${p.id.split('@')[0]}`).join("\n");
-		const jids = participants.map(p => p.id);
-		return await m.sendMsg(m.jid, msg, {
-			mentions: jids,
-			quoted: m
-		});
-});
+    name: "tagall",
+    fromMe: isPublic,
+    desc: lang.TAGALL_DESC,
+    category: "group",
+}, async ({ client, m }) => {
+    if (!m.isGroup) return await m.reply(lang.NOT_GROUP);
 
+    const { participants } = await client.groupMetadata(m.jid).catch(() => ({
+        participants: []
+    }));
+    if (!participants.length) return await m.reply(lang.ERROR_METADATA);
+
+    const msg = participants.map((p, i) => `${i + 1}. @${p.id.split('@')[0]}`).join("\n");
+    const jids = participants.map(p => p.id);
+
+    return await m.sendMsg(m.jid, msg, {
+        mentions: jids,
+        quoted: m
+    });
+});
 
 Sparky({
 	name: "add",
