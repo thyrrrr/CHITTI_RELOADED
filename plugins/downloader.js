@@ -20,7 +20,7 @@ Sparky(
         if (!args) return await m.reply(lang.NEED_URL);
         //if (isUrl(args)) return await m.reply(lang.NOT_URL);
         try {
-            await m.react('⬇️');
+            await m.react('☠️');
             let response = await getJson(config.API + "/api/downloader/igdl?url=" + args);
             for (let i of response.data) {
                 await m.sendMsg(m.jid, i.url, { quoted: m }, i.type)
@@ -34,7 +34,7 @@ Sparky(
 );
 
 Sparky({
-    name: "gpt",
+    name: "jain",
     fromMe: true,
     category: "misc",
     desc: "Query GPT-3 with a prompt"
@@ -244,7 +244,7 @@ async ({
         if (!match) return await m.reply(lang.NEED_Q);
             await m.react('🔎');
             const { result } = await getJson(config.API + "/api/search/xnxx?search=" + match);
-            await m.react('⬇️');
+            await m.react('👄');
             var xnxx = result.result[0].link
             const xdl = await getJson(`${config.API}/api/downloader/xnxx?url=${xnxx}`)
             await m.sendFromUrl(xdl.data.files.high, { caption: xdl.data.title });
