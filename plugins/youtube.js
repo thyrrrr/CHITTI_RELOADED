@@ -41,7 +41,7 @@ async ({
       args = args || m.quoted?.text;
       if(!args) return await m.reply(lang.NEED_URL);
       if (!await isUrl(args)) return await m.reply(lang.INVALID_LINK);
-      await m.react('⬇️');
+      await m.react('☠️');
       const url = await ytv(args);
       await m.sendMsg(m.jid, url, { quoted: m }, "video")
       await m.react('✅');
@@ -64,7 +64,7 @@ async ({
       args = args || m.quoted?.text;
       if(!args) return await m.reply(lang.NEED_URL);
       if (!await isUrl(args)) return await m.reply(lang.INVALID_LINK);
-      await m.react('⬇️');
+      await m.react('🤖');
       const url = await yta(args);
       const songbuff = await (await fetch(url)).buffer();
       const tomp3 = await convertToMp3(songbuff, 'mp4')
@@ -90,7 +90,7 @@ async ({
       if(!args) return await m.reply(lang.NEED_Q);
 await m.react('🔎');
 const play = (await yts(args))[0]
-await m.react('⬇️');
+await m.react('🦚');
       await m.reply(`Downloading ${play.title}`)
 const url = await yta(play.url);
 const songbuff = await (await fetch(url)).buffer();
@@ -117,7 +117,7 @@ async ({
       if(!args) return await m.reply(lang.NEED_Q);
 await m.react('🔎');
 const play = (await yts(args))[0]
-await m.react('⬇️');
+await m.react('🤖');
       await m.reply(`Downloading ${play.title}`)
 const url = await yta(play.url);
 const songbuff = await (await fetch(url)).buffer();
