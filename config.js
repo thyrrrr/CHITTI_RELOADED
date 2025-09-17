@@ -74,7 +74,7 @@ module.exports = {
 	START_MSG: toBool(process.env.START_MSG || "true"),
 	STICKER_DATA: process.env.STICKER_DATA || `🇹🇭⃝࿅ᴛͥʜͭ͢ᴇᴊᷟᴜꜱᷤᴢ͢ ⧽↝💎`,
 	SUDO: process.env.SUDO || "917012984396",
-	WORK_TYPE: process.env.WORK_TYPE || "public",
+	WORK_TYPE: process.env.WORK_TYPE || "private",
 	SAVE_STATUS: toBool(process.env.SAVE_STATUS || "false"),
 	STATUS_REPLY: toBool(process.env.STATUS_REPLY || "false"),
 	STATUS_REPLY_MSG: process.env.STATUS_REPLY_MSG || "Nice Status Brother 🦫✨",
