@@ -3,7 +3,7 @@ const config = require("../config.js");
 const FormData = require("form-data");
 const crypto = require("crypto");
 
-// ----------------- Misc Plugins -----------------
+// --- Misc Plugins ---
 Sparky({
     name: "jid",
     fromMe: isPublic,
@@ -43,7 +43,7 @@ Sparky({
     return await m.reply(`https://wa.me/${m?.quoted ? m?.quoted?.sender?.split("@")[0] : m?.sender?.split("@")[0]}${args ? `?text=${args}` : ''}`);
 });
 
-// ----------------- Song Finder Plugin -----------------
+// --- Song Finder Plugin ---
 const ACRCloudOptions = {
     host: "identify-ap-southeast-1.acrcloud.com",
     endpoint: "/v1/identify",
@@ -59,11 +59,7 @@ function buildStringToSign(method, uri, accessKey, dataType, signatureVersion, t
 }
 
 function sign(signString, accessSecret) {
-    return crypto
-        .createHmac("sha1", accessSecret)
-        .update(Buffer.from(signString, "utf-8"))
-        .digest()
-        .toString("base64");
+    return crypto.createHmac("sha1", accessSecret).update(Buffer.from(signString, "utf-8")).digest().toString("base64");
 }
 
 Sparky({
@@ -73,7 +69,6 @@ Sparky({
     desc: "Find the song from audio or video."
 }, async ({ m }) => {
     try {
-        // --- Check if user replied to audio/video ---
         if (
             !m.quoted ||
             !(
@@ -86,10 +81,10 @@ Sparky({
             return await m.reply("*Reply to an audio or video file!*"); 
         }
 
-        // --- Download media buffer ---
+        // Download media buffer
         const fileBuffer = await m.quoted.download();
 
-        // --- Cut first 15 seconds ---
+        // Cut first 15 seconds for recognition
         const data = await audioCut(fileBuffer, 0, 15);
 
         const timestamp = Math.floor(Date.now() / 1000);
@@ -104,9 +99,9 @@ Sparky({
 
         const signature = sign(stringToSign, ACRCloudOptions.access_secret);
 
-        // --- Build form data ---
+        // FormData with buffer as file
         const form = new FormData();
-        form.append("sample", data, { filename: "sample.mp3" });
+        form.append("sample", data, { filename: "sample.mp3", contentType: "audio/mpeg" });
         form.append("sample_bytes", data.length);
         form.append("access_key", ACRCloudOptions.access_key);
         form.append("data_type", ACRCloudOptions.data_type);
@@ -114,22 +109,22 @@ Sparky({
         form.append("signature", signature);
         form.append("timestamp", timestamp);
 
-        // --- Send request to ACRCloud ---
+        // Request to ACRCloud
         const res = await fetch("http://" + ACRCloudOptions.host + ACRCloudOptions.endpoint, {
             method: "POST",
+            headers: form.getHeaders(),
             body: form
         });
 
         const result = await res.json();
-
         if (result.status.msg !== "Success") {
+            console.log(result); // Debug: see what ACRCloud returned
             return await m.reply(`❌ ${result.status.msg}`);
         }
 
         const song = result.metadata.music[0];
         const artists = song.artists ? song.artists.map(a => a.name).join(", ") : "N/A";
 
-        // --- Send result ---
         await m.reply(
             `🎵 *Title:* ${song.title}\n` +
             `💿 *Album:* ${song.album?.name || "N/A"}\n` +
