@@ -1,14 +1,14 @@
-const { Sparky, isPublic, audioCut, fetch } = require("../lib/");
+const { Sparky, isPublic, audioCut, fetch } = require("../lib");
 const config = require("../config.js");
-const FormData = require('form-data');
-const crypto = require('crypto');
+const FormData = require("form-data");
+const crypto = require("crypto");
 
-// Existing plugins
+// --- Misc Plugins ---
 Sparky({
     name: "jid",
     fromMe: isPublic,
     category: "misc",
-    desc: "Gets the unique ID of a whatsapp chat or user."
+    desc: "Gets the unique ID of a WhatsApp chat or user."
 }, async ({ m }) => {
     return await m.reply(`${m?.quoted ? m?.quoted?.sender : m.jid}`);
 });
@@ -38,82 +38,92 @@ Sparky({
     name: "wame",
     fromMe: isPublic,
     category: "misc",
-    desc: "Converts a phone number into a whatsapp link."
+    desc: "Converts a phone number into a WhatsApp link."
 }, async ({ m, args }) => {
     return await m.reply(`https://wa.me/${m?.quoted ? m?.quoted?.sender?.split("@")[0] : m?.sender?.split("@")[0]}${args ? `?text=${args}` : ''}`);
 });
 
-// ----------- Song Finder Plugin -----------
+// --- Song Finder Plugin ---
 const ACRCloudOptions = {
-    host: 'identify-ap-southeast-1.acrcloud.com',
-    endpoint: '/v1/identify',
-    signature_version: '1',
-    data_type: 'audio',
+    host: "identify-ap-southeast-1.acrcloud.com",
+    endpoint: "/v1/identify",
+    signature_version: "1",
+    data_type: "audio",
     secure: true,
-    access_key: '6c4fe1633e88fb59fc5a6477683b54ee',
-    access_secret: '7gKApXSRc8bt640k9C5Jro1nn1XEycKgpOX6V0y5'
+    access_key: "6c4fe1633e88fb59fc5a6477683b54ee",
+    access_secret: "7gKApXSRc8bt640k9C5Jro1nn1XEycKgpOX6V0y5"
 };
 
 function buildStringToSign(method, uri, accessKey, dataType, signatureVersion, timestamp) {
-    return [method, uri, accessKey, dataType, signatureVersion, timestamp].join('\n');
+    return [method, uri, accessKey, dataType, signatureVersion, timestamp].join("\n");
 }
 
 function sign(signString, accessSecret) {
-    return crypto.createHmac('sha1', accessSecret)
-        .update(Buffer.from(signString, 'utf-8'))
-        .digest()
-        .toString('base64');
+    return crypto.createHmac("sha1", accessSecret).update(Buffer.from(signString, "utf-8")).digest().toString("base64");
 }
 
 Sparky({
     name: "find",
-    fromMe: true,
+    fromMe: isPublic,
     category: "search",
     desc: "Find the song from audio or video."
 }, async ({ m }) => {
-    if (!m.reply_message || (!m.reply_message.audio && !m.reply_message.video)) {
-        return await m.reply('*Reply to an audio or video file!*');
+    try {
+        // Reply check
+        if (!m.quoted || (!m.quoted.audio && !m.quoted.video)) {
+            return await m.reply("*Reply to an audio or video file!*");
+        }
+
+        // Download media
+        const filePath = await m.quoted.downloadAndSaveMediaMessage("find");
+
+        // Cut first 15 seconds for recognition
+        const data = await audioCut(filePath, 0, 15);
+
+        const timestamp = Math.floor(new Date().getTime() / 1000);
+        const stringToSign = buildStringToSign(
+            "POST",
+            ACRCloudOptions.endpoint,
+            ACRCloudOptions.access_key,
+            ACRCloudOptions.data_type,
+            ACRCloudOptions.signature_version,
+            timestamp
+        );
+
+        const signature = sign(stringToSign, ACRCloudOptions.access_secret);
+
+        const form = new FormData();
+        form.append("sample", data, { filename: "sample.mp3" });
+        form.append("sample_bytes", data.length);
+        form.append("access_key", ACRCloudOptions.access_key);
+        form.append("data_type", ACRCloudOptions.data_type);
+        form.append("signature_version", ACRCloudOptions.signature_version);
+        form.append("signature", signature);
+        form.append("timestamp", timestamp);
+
+        // Request to ACRCloud
+        const res = await fetch("http://" + ACRCloudOptions.host + ACRCloudOptions.endpoint, {
+            method: "POST",
+            body: form
+        });
+
+        const result = await res.json();
+        if (result.status.msg !== "Success") {
+            return await m.reply(`❌ ${result.status.msg}`);
+        }
+
+        const song = result.metadata.music[0];
+        const artists = song.artists ? song.artists.map(a => a.name).join(", ") : "";
+
+        await m.reply(
+            `🎵 *Title:* ${song.title}\n` +
+            `💿 *Album:* ${song.album?.name || "N/A"}\n` +
+            `👨‍🎤 *Artists:* ${artists || "N/A"}\n` +
+            `📅 *Release Date:* ${song.release_date || "N/A"}`
+        );
+
+    } catch (err) {
+        console.error(err);
+        await m.reply("❌ Something went wrong while identifying the song.");
     }
-
-    const filePath = await m.reply_message.downloadAndSaveMediaMessage('find');
-    const data = await audioCut(filePath, 0, 15); // first 15 seconds for recognition
-    const timestamp = Math.floor(new Date().getTime() / 1000);
-
-    const stringToSign = buildStringToSign(
-        'POST',
-        ACRCloudOptions.endpoint,
-        ACRCloudOptions.access_key,
-        ACRCloudOptions.data_type,
-        ACRCloudOptions.signature_version,
-        timestamp
-    );
-
-    const signature = sign(stringToSign, ACRCloudOptions.access_secret);
-
-    const form = new FormData();
-    form.append('sample', data);
-    form.append('sample_bytes', data.length);
-    form.append('access_key', ACRCloudOptions.access_key);
-    form.append('data_type', ACRCloudOptions.data_type);
-    form.append('signature_version', ACRCloudOptions.signature_version);
-    form.append('signature', signature);
-    form.append('timestamp', timestamp);
-
-    const res = await fetch('http://' + ACRCloudOptions.host + ACRCloudOptions.endpoint, {
-        method: 'POST',
-        body: form
-    });
-
-    const { status, metadata } = await res.json();
-    if (status.msg != 'Success') {
-        return await m.reply(status.msg);
-    }
-
-    const { album, release_date, artists, title } = metadata.music[0];
-    await m.reply(
-        `*Title:* ${title}\n` +
-        `*Album:* ${album.name || ''}\n` +
-        `*Artists:* ${artists ? artists.map(v => v.name).join(', ') : ''}\n` +
-        `*Release Date:* ${release_date}`
-    );
 });
